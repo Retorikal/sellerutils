@@ -1,14 +1,13 @@
 import requests
 import bs4
 import re
-import PriceDB
 import logging
 
 digimoncard_url = "https://en.digimoncard.com/cardlist/index.php?search=true"
 test_file = "pricescraper/digimoncard.html"
 
 
-def get_cardname_dict(url=digimoncard_url):
+def get_cardname_dict(url=digimoncard_url, file=""):
   logging.info("Getting cardname dict")
   card_dict = {}
   soup = None
@@ -18,7 +17,7 @@ def get_cardname_dict(url=digimoncard_url):
   else:
     logging.info("Empty URL, parsing test file")
     soup = bs4.BeautifulSoup(
-        open(test_file).read(), "html.parser")
+        open(file).read(), "html.parser")
 
   logging.info("Soup created")
 

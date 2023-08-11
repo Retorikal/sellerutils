@@ -1,8 +1,9 @@
 import csv
-
-
-def add_stocks(stocks, prices):
-  pass
+import json
+import logging
+from pricescraper.PriceDB import PriceDB as DB
+from pricescraper.YuyuteiScraper import YuyuteiScraper as YYSc
+from pricescraper import digimoncard
 
 
 def parse_stocks(filepath):
@@ -16,6 +17,22 @@ def parse_stocks(filepath):
   return stock_dict
 
 
-stocks = parse_stocks("stock.csv")
+logging.basicConfig(level=logging.INFO)
+
+
+# sc = YYSc()
+# sc.price_dict = {}
+# sc.scrape_prices_regular(
+#   "https://yuyu-tei.jp//game_digi/sell/sell_price.php?ver=ex03")
+
+# db = DB("db/nameprices.json")
+db = DB("db/nameprices.json")
+# db.refresh_prices(YYSc())
+# db.dump()
+
+stocks = parse_stocks("db/samplestock.csv")
 
 print(stocks)
+card_id = "BT14-044"
+name, variants = db.prices(card_id)
+print(f"{card_id} {name} {variants}")
