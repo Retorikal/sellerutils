@@ -1,38 +1,52 @@
 import csv
-import json
+from pricescraper.PriceDB import PriceDB as PDB
+
 import logging
-from pricescraper.PriceDB import PriceDB as DB
-from pricescraper.YuyuteiScraper import YuyuteiScraper as YYSc
-from pricescraper import digimoncard
 
 
 def parse_stocks(filepath):
-  stock_dict = {}
   with open(filepath) as file:
     reader = csv.reader(file, delimiter=",")
     next(reader)
     for row in reader:
-      stock_dict[row[0]] = [int(i) for i in row[1:] if i != '']
+      yield (row[0], [int(i) for i in row[1:] if i != ''])
 
-  return stock_dict
+
+def tokopedia_push_stock(card_id, variant):
+  pass
+
+
+def add_stocks(stock_file, prices_file, dry_run=True):
+  db = PDB(prices_file)
+  warn_counters = 0
+
+  for card_id, stocks in parse_stocks(stock_file):
+    name, prices_main, prices_alt = db.prices(card_id)
+
+    for variant, stock in zip(prices_main.keys(), stocks):
+      logging.info(f"{card_id} {name}: {variant} ({stock} pcs) added")
+      if not dry_run:
+        tokopedia_push_stock()
+
+    for variant, stock in zip(prices_alt.keys(), stocks):
+      if variant[0] == "_":
+        logging.warning(
+          f"add_stocks, {card_id} {name}: {variant} is not identified. Skipping")
+        warn_counters += 1
+        continue
+
+      logging.info(f"{card_id} {name}: {variant} ({stock} pcs) added")
+      if not dry_run:
+        tokopedia_push_stock()
+
+  if warn_counters == 0:
+    logging.info(f"{warn_counters} warnings")
+
+  else:
+    logging.warning(f"{warn_counters} warnings, double check {prices_file}")
+
+  return warn_counters
 
 
 logging.basicConfig(level=logging.INFO)
-
-
-# sc = YYSc()
-# sc.price_dict = {}
-# sc.scrape_prices_regular(
-#   "https://yuyu-tei.jp//game_digi/sell/sell_price.php?ver=ex03")
-
-# db = DB("db/nameprices.json")
-db = DB("db/nameprices.json")
-# db.refresh_prices(YYSc())
-# db.dump()
-
-stocks = parse_stocks("db/samplestock.csv")
-
-print(stocks)
-card_id = "BT14-044"
-name, variants = db.prices(card_id)
-print(f"{card_id} {name} {variants}")
+add_stocks("./db/samplestock.csv", "./db/nameprices.json")

@@ -23,10 +23,11 @@ class PriceDB():
     self.db = digimoncard.get_cardname_dict(url="", file="digimoncard.html")
     scraper.scrape(self.db)
 
-  def prices(self, card_id):
+  def prices(self, card_id) -> tuple[str, dict, dict]:
     return (
         self.db[card_id]["name"],
-        self.db[card_id]["main_variant"] | self.db[card_id]["alt_variant"],
+        self.db[card_id]["main_variant"],
+        self.db[card_id]["alt_variant"]
       )
 
   def dump(self, filename=""):
