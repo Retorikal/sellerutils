@@ -6,6 +6,19 @@ import logging
 digimoncard_url = "https://en.digimoncard.com/cardlist/index.php?search=true"
 test_file = "pricescraper/digimoncard.html"
 
+# Get a dictionary containing a blank structure, with the only populated fields
+# being the card id as dict key and card name.
+
+
+def new_card_entry(name):
+  return {
+      "name": name,
+      "variants": 1,
+      "main_variant": {},
+      "alt_variant": {},
+      "variant_names": {}
+  }
+
 
 def get_cardname_dict(url=digimoncard_url, file=""):
   logging.info("Getting cardname dict")
@@ -32,12 +45,7 @@ def get_cardname_dict(url=digimoncard_url, file=""):
     card_id = re.split('_|\.', card_img_name)[0]
 
     if not card_id in card_dict:
-      card_dict[card_id] = {
-        "name": card_name,
-        "variants": 1,
-        "main_variant": {},
-        "alt_variant": {},
-      }
+      card_dict[card_id] = new_card_entry(card_name)
     # Probably need to move this declaration somewhere
 
     else:

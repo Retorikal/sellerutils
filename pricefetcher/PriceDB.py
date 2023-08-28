@@ -1,8 +1,8 @@
 import os.path
 import json
 import logging
-from pricescraper import digimoncard
-from pricescraper import Scraper
+from namefetcher import digimoncard
+from pricefetcher.scrapers import Scraper
 
 
 class PriceDB():
@@ -19,18 +19,21 @@ class PriceDB():
   def __str__(self) -> str:
     return self.db.__str__()
 
-  def refresh_prices(self, scraper: Scraper):
-    self.db = digimoncard.get_cardname_dict(url="", file="digimoncard.html")
+  def refresh_prices(self, scraper: Scraper, dump=True):
     scraper.scrape(self.db)
 
-  def prices(self, card_id) -> tuple[str, dict, dict]:
+    if dump:
+      self.dump_file()
+
+  def get_prices(self, card_id) -> tuple[str, dict, dict, dict]:
     return (
         self.db[card_id]["name"],
         self.db[card_id]["main_variant"],
-        self.db[card_id]["alt_variant"]
+        self.db[card_id]["alt_variant"],
+        self.db[card_id]["variant_names"],
       )
 
-  def dump(self, filename=""):
+  def dump_file(self, filename=""):
     targetfile = filename if filename != "" else self.filesrc
     logging.info(f"dump start, dumping to {targetfile}")
 

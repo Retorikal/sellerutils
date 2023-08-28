@@ -3,20 +3,25 @@ import bs4
 import re
 import logging
 
-from pricescraper.PriceDB import PriceDB
-from pricescraper.Scraper import Scraper
+from namefetcher import digimoncard
+
+from pricefetcher.PriceDB import PriceDB
+from pricefetcher.scrapers.Scraper import Scraper
 
 
-class YuyuteiScraper(Scraper):
+class YYTDigiScraper(Scraper):
   def __init__(self) -> None:
     self.base_url = "https://yuyu-tei.jp/"
     self.digi_url = "/game_digi/"
     self.price_dict = {}
+    self.ref_dict = {}
     super().__init__()
 
-  def scrape(self, price_dict: dict):
-    cats = self.get_categories(self.base_url + self.digi_url, self.base_url)
+  def scrape_update(self, price_dict: dict):
+    self.ref_dict = digimoncard.get_cardname_dict()
     self.price_dict = price_dict
+
+    cats = self.get_categories(self.base_url + self.digi_url, self.base_url)
     promo_cats = [cat for cat in cats if "promo" in cat]
     regular_cats = [cat for cat in cats if not "promo" in cat]
 
@@ -25,6 +30,8 @@ class YuyuteiScraper(Scraper):
 
     for cat in promo_cats:
       self.scrape_prices_promo(cat)
+
+    self.ref_dict.clear()
 
   def get_categories(self, url, base_url):
     logging.info("get_categories start")
@@ -86,13 +93,12 @@ class YuyuteiScraper(Scraper):
 
   def register_card(self, card_id):
     if not card_id in self.price_dict:
-      self.price_dict[card_id] = {
-        "name": card_id,
-        "variants": 0,
-        "main_variant": {},
-        "alt_variant": {},
-      }
-      # Probably need to move this declaration somewhere
+      if card_id in self.ref_dict:
+        self.price_dict[card_id] = self.ref_dict[card_id].copy()
+      else:
+        logging.warn(
+          "YYTDigiScraper, register_card, price entry found with no name")
+        self.price_dict[card_id] = digimoncard.new_card_entry("UNKNOWN")
 
   def add_card(self, card_id: str, price: int, consequent=1, booster_source=""):
     if not card_id in self.price_dict:
@@ -106,10 +112,7 @@ class YuyuteiScraper(Scraper):
     else:
       cluster = self.price_dict[card_id]["alt_variant"]
       variant_id = f"{booster_source}-p{consequent}"
-      if variant_id in cluster:
-        cluster[variant_id] = price
-      else:
-        cluster[f"_{variant_id}"] = price
+      cluster[variant_id] = price
 
     logging.info(f"{card_id}: {self.price_dict[card_id]}")
     return

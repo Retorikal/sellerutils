@@ -1,5 +1,7 @@
 import csv
-from pricescraper.PriceDB import PriceDB as PDB
+from pricefetcher.PriceDB import PriceDB as PDB
+from pricefetcher.scrapers.YYTScraper import YYTDigiScraper as YYTScraper
+from imagefactory.Layouter import Layouter
 
 import logging
 
@@ -21,7 +23,7 @@ def add_stocks(stock_file, prices_file, dry_run=True):
   warn_counters = 0
 
   for card_id, stocks in parse_stocks(stock_file):
-    name, prices_main, prices_alt = db.prices(card_id)
+    name, prices_main, prices_alt = db.get_prices(card_id)
 
     for variant, stock in zip(prices_main.keys(), stocks):
       logging.info(f"{card_id} {name}: {variant} ({stock} pcs) added")
@@ -49,4 +51,12 @@ def add_stocks(stock_file, prices_file, dry_run=True):
 
 
 logging.basicConfig(level=logging.INFO)
-add_stocks("./db/samplestock.csv", "./db/nameprices.json")
+db = PDB("./db/nameprices.json")
+mock_stock = [
+  ["BT10-030", "1"],
+  ["BT9-109", "1", "1"],
+]
+layouter = Layouter("./imagefactory/templates/templateDigi.svg")
+layouter.craft_images_from_stock(db, mock_stock)
+
+# add_stocks("./db/samplestock.csv", "./db/nameprices.json")
