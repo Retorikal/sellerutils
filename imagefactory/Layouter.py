@@ -27,7 +27,7 @@ class Layouter():
     self.cardimg_dir = default_cardimg_idr
     self.repl_dict = {}
 
-    def repl(m):
+    def subs_template_format(m):
       n = m.group(1)
       self.repl_dict[n] = None
       return f"${n}"
@@ -35,14 +35,26 @@ class Layouter():
     with open(template_path,) as template_file:
       bracket_regex = re.compile("\{(.*)\}")
       file_content = template_file.read()
-      template_str = bracket_regex.sub(repl, file_content)
+      template_str = bracket_regex.sub(
+        subs_template_format, file_content)
       self.template = Template(template_str)
 
     logging.info(f"Layouter, created with template {template_path}")
 
   def craft_images_from_stock(self, db: PDB, stock_entries: list[str]):
-    for name_paragraph, price, img_url in self.__iterate_stock(db, stock_entries):
-      print(name_paragraph, price, img_url)
+    for name_paragraph, price, card_id in self.__iterate_stock(db, stock_entries):
+      print(name_paragraph, price, card_id)
+      image = self.get_card_image(card_id)
+
+      self.repl_dict["CARDCODE"] = card_id
+      self.repl_dict["CARDIMG"] = f"{default_cardimg_idr}{card_id}.png"
+
+      for i, text in enumerate(name_paragraph):
+        self.repl_dict[f"CARDNAME{i+1}"] = text
+
+      svg_string = self.template.substitute(self.repl_dict)
+
+      # save svg string
       pass
     pass
 
@@ -54,14 +66,14 @@ class Layouter():
       index = 0
 
       def get_image() -> str:
-        return card_id + (f"_P{index}" if index > 0 else "") + ".png"
+        return card_id + (f"_P{index}" if index > 0 else "")
 
       for variant in main_prices:
         if index >= len(stock):
           continue
 
         if int(stock[index]):
-          name_list = [card_id, name]
+          name_list = [name]
           key_spec = int(variant[-1])
           if key_spec > 1:
             name_list.append("Parallel" + f" {key_spec}")
@@ -75,7 +87,7 @@ class Layouter():
           continue
 
         if int(stock[index]) > 0 and variant[0] != "_":
-          name_list = [card_id, name]
+          name_list = [name]
           booster_source, _ = variant.split("-")
 
           if booster_source == "P":
@@ -103,18 +115,15 @@ class Layouter():
     #   add 1 extra field: "custom_image_path"
     #   use skip specifier: "_skip1" : 0
 
-  def get_card_images(self, cardlist):
-    logging.info("Parsing cardlist and downloading images..")
-    for entry in cardlist:
-      filename = f"{self.cardimg_dir}{entry}.png"
-      if not exists(filename):
-        logging.info(f"Downloading {entry}.png image")
-        wget.download(jp_url.format(entry), filename)
-      else:
-        logging.info(f"{filename} exists")
+  def get_card_image(self, entry):
+    filename = f"{self.cardimg_dir}{entry}.png"
+    if not exists(filename):
+      logging.info(f"Downloading {entry}.png image")
+      out = wget.download(jp_url.format(entry), filename)
+      return out
+    else:
+      logging.info(f"{filename} exists")
     print(f"Download complete")
-
-    return cardlist
 
 
 # logging.basicConfig(level=logging.INFO)
