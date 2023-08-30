@@ -1,30 +1,28 @@
 #!/usr/bin/python3
 from os.path import exists
-from typing import Generator
-from xml.etree import ElementTree
 from datetime import datetime
 from string import Template
 from pricefetcher.PriceDB import PriceDB as PDB
 import logging
-import cairosvg
-import copy
-import math
 import wget
-import cairosvg
 import re
+import os
+from collections.abc import Iterable
 
 now = datetime.now
 default_template = "template/template_a3_port.svg"
-default_outdir = "imgcache/"
-default_cardimg_idr = "imgcache/cardimg/"
+default_cache_dir = "imgcache/"
+default_img_dir = "imgcache/cardimg/"
+default_out_dir = "imgcache/output/"
 jp_url = "https://en.digimoncard.com/images/cardlist/card/{}.png"
 
 
 class Layouter():
   def __init__(self, template_path: str) -> None:
     self.template_path = template_path
-    self.out_dir = default_outdir
-    self.cardimg_dir = default_cardimg_idr
+    self.cache_dir = os.path.join(os.getcwd(), default_cache_dir)
+    self.img_dir = os.path.join(os.getcwd(), default_img_dir)
+    self.out_dir = os.path.join(os.getcwd(), default_out_dir)
     self.repl_dict = {}
 
     def subs_template_format(m):
@@ -41,24 +39,30 @@ class Layouter():
 
     logging.info(f"Layouter, created with template {template_path}")
 
-  def craft_images_from_stock(self, db: PDB, stock_entries: list[str]):
-    for name_paragraph, price, card_id in self.__iterate_stock(db, stock_entries):
-      print(name_paragraph, price, card_id)
-      image = self.get_card_image(card_id)
+  def craft_images_from_stock(self, db: PDB, stock_entries: list[str], force_update=False):
+    for name, desc, price, card_image_id in self.__iterate_stock(db, stock_entries):
+      image = self.get_card_image(card_image_id)
 
-      self.repl_dict["CARDCODE"] = card_id
-      self.repl_dict["CARDIMG"] = f"{default_cardimg_idr}{card_id}.png"
-
-      for i, text in enumerate(name_paragraph):
-        self.repl_dict[f"CARDNAME{i+1}"] = text
+      self.repl_dict["CARDNAME"] = name
+      self.repl_dict["CARDDESC"] = desc
+      self.repl_dict["CARDIMG"] = os.path.join(self.img_dir, card_image_id)
 
       svg_string = self.template.substitute(self.repl_dict)
+      filename = os.path.join(self.cache_dir, f"{card_image_id}.svg")
+      if not exists(filename) or force_update:
+        logging.info(f"writing image {filename}")
+        with open(filename, "w") as svg_file:
+          svg_file.write(svg_string)
+      else:
+        logging.info(f"{filename} exists!")
 
-      # save svg string
-      pass
-    pass
+    os.system(
+      f'inkscape --actions="export-type:png;export-do;" {self.cache_dir}/*.svg')
+    os.system(
+      f'mv {self.cache_dir}/*.png {self.out_dir}/')
+    # save svg string
 
-  def __iterate_stock(self, db: PDB, stock_entries: list[list[str]]) -> Generator[list[str], int, str]:
+  def __iterate_stock(self, db: PDB, stock_entries: list[list[str]]) -> Iterable[str, str, int, str]:
     for stock_entry in stock_entries:
       card_id = stock_entry[0]
       stock = stock_entry[1:]
@@ -73,12 +77,12 @@ class Layouter():
           continue
 
         if int(stock[index]):
-          name_list = [name]
+          desc_list = f"{card_id}\n"
           key_spec = int(variant[-1])
           if key_spec > 1:
-            name_list.append("Parallel" + f" {key_spec}")
+            desc_list += f"Parallel {key_spec} \n"
 
-          yield (name_list, main_prices[variant], get_image())
+          yield (name, desc_list, main_prices[variant], get_image())
 
         index += 1
 
@@ -87,23 +91,22 @@ class Layouter():
           continue
 
         if int(stock[index]) > 0 and variant[0] != "_":
-          name_list = [name]
+          desc_list = f"{card_id}\n"
           booster_source, _ = variant.split("-")
 
           if booster_source == "P":
             if variant in alt_names:
-              name_list.append(alt_names[variant])
+              desc_list += f"{alt_names[variant]}\n"
             else:
               logging.error(
                 f"{variant} specific origin unspecified. Please add first.")
           else:
             key_spec = int(variant[-1])
-            name_list.append(f"{booster_source} reprint")
+            desc_list += f"{booster_source} reprint\n"
             if key_spec > 1:
-              name_list.append(
-                  "Parallel" + f" {key_spec}" if key_spec > 1 else "")
+              desc_list += f"Parallel{ f' {key_spec}' if key_spec > 1 else ''}"
 
-          yield (name_list, alt_prices[variant], get_image())
+          yield (name, desc_list, alt_prices[variant], get_image())
         else:
           if stock[index] > 0 and variant[0] == "_":
             logging.error(f"nonzero stock for skip specifier: {variant}")
@@ -116,7 +119,7 @@ class Layouter():
     #   use skip specifier: "_skip1" : 0
 
   def get_card_image(self, entry):
-    filename = f"{self.cardimg_dir}{entry}.png"
+    filename = os.path.join(self.img_dir, f"{entry}.png")
     if not exists(filename):
       logging.info(f"Downloading {entry}.png image")
       out = wget.download(jp_url.format(entry), filename)
