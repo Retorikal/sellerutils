@@ -10,17 +10,16 @@ import os
 from collections.abc import Iterable
 
 now = datetime.now
-default_template = "template/template_a3_port.svg"
-default_cache_dir = "imgcache/"
-default_img_dir = "imgcache/cardimg/"
-default_out_dir = "imgcache/output/"
+default_sandbox_dir = "workspace/sandbox"
+default_img_dir = "workspace/sandbox/images/"
+default_out_dir = "workspace/output/"
 jp_url = "https://en.digimoncard.com/images/cardlist/card/{}.png"
 
 
 class Layouter():
   def __init__(self, template_path: str) -> None:
     self.template_path = template_path
-    self.cache_dir = os.path.join(os.getcwd(), default_cache_dir)
+    self.sandbox_dir = os.path.join(os.getcwd(), default_sandbox_dir)
     self.img_dir = os.path.join(os.getcwd(), default_img_dir)
     self.out_dir = os.path.join(os.getcwd(), default_out_dir)
     self.repl_dict = {}
@@ -39,7 +38,7 @@ class Layouter():
 
     logging.info(f"Layouter, created with template {template_path}")
 
-  def craft_images_from_stock(self, db: PDB, stock_entries: list[str], force_update=False):
+  def craft_images_from_stock(self, db: PDB, stock_entries: Iterable[tuple[str, list[str]]], force_update=False):
     for name, desc, price, card_image_id in self.__iterate_stock(db, stock_entries):
       image = self.get_card_image(card_image_id)
 
@@ -48,7 +47,7 @@ class Layouter():
       self.repl_dict["CARDIMG"] = os.path.join(self.img_dir, card_image_id)
 
       svg_string = self.template.substitute(self.repl_dict)
-      filename = os.path.join(self.cache_dir, f"{card_image_id}.svg")
+      filename = os.path.join(self.sandbox_dir, f"{card_image_id}.svg")
       if not exists(filename) or force_update:
         logging.info(f"writing image {filename}")
         with open(filename, "w") as svg_file:
@@ -57,15 +56,13 @@ class Layouter():
         logging.info(f"{filename} exists!")
 
     os.system(
-      f'inkscape --actions="export-type:png;export-do;" {self.cache_dir}/*.svg')
-    os.system(
-      f'mv {self.cache_dir}/*.png {self.out_dir}/')
+      f'inkscape --actions="export-type:png;export-do;" {self.sandbox_dir}/*.svg')
+    os.system(f'mv {self.sandbox_dir}/*.png {self.out_dir}/')
+    os.system(f'mv {self.sandbox_dir}/*.svg {self.out_dir}/')
     # save svg string
 
-  def __iterate_stock(self, db: PDB, stock_entries: list[list[str]]) -> Iterable[str, str, int, str]:
-    for stock_entry in stock_entries:
-      card_id = stock_entry[0]
-      stock = stock_entry[1:]
+  def __iterate_stock(self, db: PDB, stock_entries: (str, list[str])) -> Iterable[str, str, int, str]:
+    for card_id, stock in stock_entries:
       name, main_prices, alt_prices, alt_names = db.get_prices(card_id)
       index = 0
 

@@ -1,9 +1,12 @@
-import csv
+
 from pricefetcher.PriceDB import PriceDB as PDB
 from pricefetcher.scrapers.YYTScraper import YYTDigiScraper as YYTScraper
 from imagefactory.Layouter import Layouter
 
 import logging
+import csv
+
+logging.basicConfig(level=logging.INFO)
 
 
 def parse_stocks(filepath):
@@ -50,13 +53,18 @@ def add_stocks(stock_file, prices_file, dry_run=True):
   return warn_counters
 
 
-logging.basicConfig(level=logging.INFO)
-db = PDB("./db/nameprices.json")
+db = PDB("workspace/db/nameprices.json")
 mock_stock = [
-  ["BT10-030", "1"],
-  ["BT9-109", "1", "1"],
+  ("BT10-030", ["1"]),
+  ("BT9-109", ["1", "1"]),
 ]
-layouter = Layouter("./imagefactory/templates/templateDigi.svg")
+layouter = Layouter("workspace/templates/templateDigi.svg")
+# layouter.craft_images_from_stock(
+#   db, parse_stocks("workspace/static/samplestock.csv"))
 layouter.craft_images_from_stock(db, mock_stock)
+
+
+# db = PDB("workspace/db/nameprices.json")
+# db.refresh_prices(YYTScraper(), True)
 
 # add_stocks("./db/samplestock.csv", "./db/nameprices.json")
