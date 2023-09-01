@@ -1,4 +1,5 @@
 import openpyxl as opxl
+from pricefetcher.PriceDB import PriceDB as PDB
 import os
 import json
 from string import Template
@@ -55,7 +56,7 @@ class Tokopedia():
       if "$" in self.defaults[key]:
         self.defaults[key] = Template(self.defaults[key])
 
-  def populate_from_stock_file(self, stocks):
+  def populate_from_stock_file(self, db: PDB, stocks):
     for stock in stocks:
       self.entry_ws.append(self.create_entry(stock))
 

@@ -2,6 +2,7 @@
 from pricefetcher.PriceDB import PriceDB as PDB
 from pricefetcher.scrapers.YYTScraper import YYTDigiScraper as YYTScraper
 from imagefactory.Layouter import Layouter
+from uploadfilefactory.tokopedia import Tokopedia
 
 import logging
 import csv
@@ -53,16 +54,21 @@ def add_stocks(stock_file, prices_file, dry_run=True):
   return warn_counters
 
 
+stockfile = "workspace/static/samplestock.csv"
+stockid = stockfile.split("/")[-1]
+
 db = PDB("workspace/db/nameprices.json")
 mock_stock = [
   ("BT10-030", ["1"]),
   ("BT9-109", ["1", "1"]),
 ]
 layouter = Layouter("workspace/templates/templateDigi.svg")
-# layouter.craft_images_from_stock(
-#   db, parse_stocks("workspace/static/samplestock.csv"))
-layouter.craft_images_from_stock(db, mock_stock)
+layouter.craft_images_from_stock(
+  db, parse_stocks("workspace/static/samplestock.csv"))
 
+tokopedia = Tokopedia(f"workspace/output/{stockid}.xlsx")
+tokopedia.add_entry_from_stock(
+  db, parse_stocks("workspace/static/samplestock.csv"))
 
 # db = PDB("workspace/db/nameprices.json")
 # db.refresh_prices(YYTScraper(), True)
