@@ -1,5 +1,7 @@
 import openpyxl as opxl
 import os
+import json
+from string import Template
 
 columns = [
   "Pesan Error",
@@ -29,6 +31,7 @@ columns = [
 
 
 default_name = "static/tambah-sekaligus.xlsx"
+defaults_file_path = "./productdescdefaults.json"
 
 
 class Tokopedia():
@@ -42,10 +45,28 @@ class Tokopedia():
     else:
       raise FileNotFoundError
 
-  def add_entry(self, to_append):
-    self.entry_ws.append(to_append)
+    with (open(defaults_file_path)) as defaults_file:
+      self.defaults = json.load(defaults_file)
+
+    for key in self.defaults:
+      if self.defaults[key] is list:
+        self.defaults[key] = self.defaults[key].join("\n")
+
+      if "$" in self.defaults[key]:
+        self.defaults[key] = Template(self.defaults[key])
+
+  def populate_from_stock_file(self, stocks):
+    for stock in stocks:
+      self.entry_ws.append(self.create_entry(stock))
+
+  def create_entry(self, info):
+    row = []
+    for column in columns:
+      value = self.defaults.get(column, "")
+      if value is Template:
+        value = value.substitute(info)
+      row.append(value)
+    return row
 
   def save(self):
     self.wb.save(self.filename)
-
-  pass
