@@ -5,14 +5,13 @@ import logging
 
 from namefetcher import digimoncard
 
-from pricefetcher.PriceDB import PriceDB
 from pricefetcher.scrapers.Scraper import Scraper
 
 
 class YYTDigiScraper(Scraper):
   def __init__(self) -> None:
-    self.base_url = "https://yuyu-tei.jp/"
-    self.digi_url = "/game_digi/"
+    self.domain = "https://yuyu-tei.jp/"
+    self.digi_url = "https://yuyu-tei.jp/game_digi/"
     self.price_dict = {}
     self.ref_dict = {}
     super().__init__()
@@ -21,7 +20,7 @@ class YYTDigiScraper(Scraper):
     self.ref_dict = digimoncard.get_cardname_dict()
     self.price_dict = price_dict
 
-    cats = self.get_categories(self.base_url + self.digi_url, self.base_url)
+    cats = self.get_categories()
     promo_cats = [cat for cat in cats if "promo" in cat]
     regular_cats = [cat for cat in cats if not "promo" in cat]
 
@@ -33,9 +32,9 @@ class YYTDigiScraper(Scraper):
 
     self.ref_dict.clear()
 
-  def get_categories(self, url, base_url):
+  def get_categories(self):
     logging.info("get_categories start")
-    page = requests.get(url)
+    page = requests.get(self.digi_url)
     soup = bs4.BeautifulSoup(page.content, "html.parser")
     singles = soup.find("li", {"class": "item_single_card"})
     categories = singles.find_all("a", href=True)
@@ -43,7 +42,7 @@ class YYTDigiScraper(Scraper):
     print(f"{len(links)} links found")
 
     seen = set()
-    return [base_url + link for link in links if not (link in seen or seen.add(link))]
+    return [self.domain + link for link in links if not (link in seen or seen.add(link))]
 
   def scrape_prices_promo(self, url: str):
     logging.info(f"scrape_prices_promo start, scraping from {url}")
@@ -51,19 +50,17 @@ class YYTDigiScraper(Scraper):
     soup = bs4.BeautifulSoup(page.content, "html.parser")
     groups = soup.find_all(
         "div", {"class": re.compile("group_box")})
+    para_count = {}
 
     for group in groups:
       ids_p = group.find_all('p', {'class': 'id'})
       prices_p = group.find_all('p', {'class': 'price'})
-      consequent = 0
-      last_id = ""
 
       for id_p, price_p in zip(ids_p, prices_p):
         id = id_p.text.strip()
+        para_count[id] = para_count[id] + 1 if id in para_count else 0
         price = int(price_p.text.split()[0][:-1])
-        consequent = consequent + 1 if last_id == id else 0
-        last_id = id
-        self.add_card(id, price, consequent, "P")
+        self.add_card(id, price, para_count[id], "P")
 
   def scrape_prices_regular(self, url: str):
     logging.info(f"scrape_prices_regular start, scraping from {url}")
@@ -77,19 +74,17 @@ class YYTDigiScraper(Scraper):
         "div", {"class": re.compile("group_box rarity_P")})
     groups_base = soup.find_all(
         "div", {"class": re.compile("group_box rarity_[^P]")})
+    para_count = {}
 
     for group in [*groups_base, *groups_para]:
       ids_p = group.find_all('p', {'class': 'id'})
       prices_p = group.find_all('p', {'class': 'price'})
-      consequent = 0
-      last_id = ""
 
       for id_p, price_p in zip(ids_p, prices_p):
         id = id_p.text.strip()
         price = int(price_p.text.split()[0][:-1])
-        consequent = consequent + 1 if last_id == id else 0
-        last_id = id
-        self.add_card(id, price, consequent, booster)
+        para_count[id] = para_count[id] + 1 if id in para_count else 0
+        self.add_card(id, price, para_count[id], booster)
 
   def register_card(self, card_id):
     if not card_id in self.price_dict:
@@ -100,18 +95,17 @@ class YYTDigiScraper(Scraper):
           "YYTDigiScraper, register_card, price entry found with no name")
         self.price_dict[card_id] = digimoncard.new_card_entry("UNKNOWN")
 
-  def add_card(self, card_id: str, price: int, consequent=1, booster_source=""):
+  def add_card(self, card_id: str, price: int, alt_id=1, booster_source=""):
     if not card_id in self.price_dict:
       self.register_card(card_id)
 
     if booster_source == "" or booster_source.upper() in card_id.upper():
       cluster = self.price_dict[card_id]["main_variant"]
-      size = len(cluster)
-      variant_id = f"p{size}"
+      variant_id = f"p{alt_id}"
       cluster[variant_id] = price
     else:
       cluster = self.price_dict[card_id]["alt_variant"]
-      variant_id = f"{booster_source}-p{consequent}"
+      variant_id = f"{booster_source}-p{alt_id}"
       cluster[variant_id] = price
 
     logging.info(f"{card_id}: {self.price_dict[card_id]}")

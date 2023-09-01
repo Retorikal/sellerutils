@@ -1,0 +1,6 @@
+*.pyc
+
+workspace/images/*
+workspace/output/*
+
+**/__pycache__

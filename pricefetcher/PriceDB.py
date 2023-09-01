@@ -13,6 +13,7 @@ class PriceDB():
       with open(filesrc) as file:
         self.db = json.load(file)
     else:
+      logging.warn("PriceDB, __init__, file not specified or does not exist")
       self.db = base_db
     pass
 
@@ -20,7 +21,7 @@ class PriceDB():
     return self.db.__str__()
 
   def refresh_prices(self, scraper: Scraper, dump=True):
-    scraper.scrape(self.db)
+    scraper.scrape_update(self.db)
 
     if dump:
       self.dump_file()
