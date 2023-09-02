@@ -3,12 +3,12 @@ import bs4
 import re
 import logging
 
-from namefetcher import digimoncard
+from fetcher.cardnames import digimoncard
 
-from pricefetcher.scrapers.Scraper import Scraper
+from fetcher.price.IScraper import Scraper
 
 
-class YYTDigiScraper(Scraper):
+class ScraperYYTDigi(Scraper):
   def __init__(self) -> None:
     self.domain = "https://yuyu-tei.jp/"
     self.digi_url = "https://yuyu-tei.jp/game_digi/"

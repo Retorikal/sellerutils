@@ -7,9 +7,6 @@ import os
 digimoncard_url = "https://en.digimoncard.com/cardlist/index.php?search=true"
 test_file = os.path.join(os.getcwd(), "workspace/static/digimoncard.html")
 
-# Get a dictionary containing a blank structure, with the only populated fields
-# being the card id as dict key and card name.
-
 
 def new_card_entry(name):
   return {

@@ -1,11 +1,11 @@
 import os.path
 import json
 import logging
-from namefetcher import digimoncard
-from pricefetcher.scrapers import Scraper
+from fetcher.cardnames import digimoncard
+from fetcher.price import IScraper
 
 
-class PriceDB():
+class Prices():
   def __init__(self, filesrc="", base_db={}) -> None:
 
     self.filesrc = filesrc
@@ -20,7 +20,7 @@ class PriceDB():
   def __str__(self) -> str:
     return self.db.__str__()
 
-  def refresh_prices(self, scraper: Scraper, dump=True):
+  def refresh_prices(self, scraper: IScraper, dump=True):
     scraper.scrape_update(self.db)
 
     if dump:

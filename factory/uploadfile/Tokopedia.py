@@ -1,5 +1,5 @@
 import openpyxl as opxl
-from pricefetcher.PriceDB import PriceDB as PDB
+from database.Price import Prices as Prices
 import os
 import json
 from string import Template
@@ -31,43 +31,46 @@ columns = [
 ]
 
 
-default_name = "static/tambah-sekaligus.xlsx"
-defaults_file_path = "./productdescdefaults.json"
+default_name = "workspace/static/tambah-sekaligus.xlsx"
+default_fields_path = "workspace/static/productdescdefaults.json"
 
 
 class Tokopedia():
-  def __init__(self, filename, template=""):
-    self.filename = filename
-    self.filesrc = template
-    self.entry_ws = self.wb.get_sheet_by_name("ISI Template Impor Produk")
+  def __init__(self, workpath, templatepath=default_name):
+    self.workpath = workpath
 
-    if os.path.exists(template):
-      self.wb = opxl.load_workbook(template)
+    if os.path.exists(templatepath):
+      self.wb = opxl.load_workbook(templatepath)
     else:
       raise FileNotFoundError
 
-    with (open(defaults_file_path)) as defaults_file:
+    self.entry_ws = self.wb.get_sheet_by_name("ISI Template Impor Produk")
+
+    with (open(default_fields_path)) as defaults_file:
       self.defaults = json.load(defaults_file)
 
     for key in self.defaults:
-      if self.defaults[key] is list:
-        self.defaults[key] = self.defaults[key].join("\n")
+      if type(self.defaults[key]) is list:
+        self.defaults[key] = "\n".join(self.defaults[key])
 
       if "$" in self.defaults[key]:
         self.defaults[key] = Template(self.defaults[key])
 
-  def populate_from_stock_file(self, db: PDB, stocks):
-    for stock in stocks:
-      self.entry_ws.append(self.create_entry(stock))
+  def populate_from_stock_entry(self, db: Prices, card_details: dict):
+    card_details["TOKOPEDIA_TITLEDESC"] = card_details["CARDDESC"].replace(
+      "\n", ", ")
+    self.entry_ws.append(self.__create_entry(card_details))
 
-  def create_entry(self, info):
+  def __create_entry(self, info):
     row = []
     for column in columns:
       value = self.defaults.get(column, "")
-      if value is Template:
+
+      if type(value) is Template:
         value = value.substitute(info)
+
       row.append(value)
     return row
 
   def save(self):
-    self.wb.save(self.filename)
+    self.wb.save(self.workpath)

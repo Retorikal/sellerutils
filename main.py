@@ -1,8 +1,8 @@
 
-from pricefetcher.PriceDB import PriceDB as PDB
-from pricefetcher.scrapers.YYTScraper import YYTDigiScraper as YYTScraper
-from imagefactory.Layouter import Layouter
-from uploadfilefactory.tokopedia import Tokopedia
+from database.Price import Prices
+from database.Stocks import Stocks
+from factory.image.SVGTemplate import SVGTemplate
+from factory.uploadfile.Tokopedia import Tokopedia
 
 import logging
 import csv
@@ -23,7 +23,7 @@ def tokopedia_push_stock(card_id, variant):
 
 
 def add_stocks(stock_file, prices_file, dry_run=True):
-  db = PDB(prices_file)
+  db = Prices(prices_file)
   warn_counters = 0
 
   for card_id, stocks in parse_stocks(stock_file):
@@ -54,23 +54,21 @@ def add_stocks(stock_file, prices_file, dry_run=True):
   return warn_counters
 
 
-stockfile = "workspace/static/samplestock.csv"
-stockid = stockfile.split("/")[-1]
+stockpath = "workspace/static/samplestock.csv"
+stockid = stockpath.split("/")[-1].split(".")[0]
 
-db = PDB("workspace/db/nameprices.json")
-mock_stock = [
-  ("BT10-030", ["1"]),
-  ("BT9-109", ["1", "1"]),
-]
-layouter = Layouter("workspace/templates/templateDigi.svg")
-layouter.craft_images_from_stock(
-  db, parse_stocks("workspace/static/samplestock.csv"))
+pricespath = "workspace/db/nameprices.json"
+templatepath = "workspace/static/templates/templateDigi.svg"
+tokopediapath = f"workspace/output/{stockid}.xlsx"
 
-tokopedia = Tokopedia(f"workspace/output/{stockid}.xlsx")
-tokopedia.add_entry_from_stock(
-  db, parse_stocks("workspace/static/samplestock.csv"))
+db = Prices(pricespath)
+imgfactory = SVGTemplate(templatepath)
+tokopedia = Tokopedia(tokopediapath)
+stocks = Stocks(stockpath, db)
 
-# db = PDB("workspace/db/nameprices.json")
-# db.refresh_prices(YYTScraper(), True)
+for stock in stocks.parse():
+  imgfactory.generate_from_stock_entry(db, stock)
+  tokopedia.populate_from_stock_entry(db, stock)
 
-# add_stocks("./db/samplestock.csv", "./db/nameprices.json")
+imgfactory.dump_results()
+tokopedia.save()
