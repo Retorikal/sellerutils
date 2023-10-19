@@ -54,7 +54,7 @@ def add_stocks(stock_file, prices_file, dry_run=True):
   return warn_counters
 
 
-stockpath = "workspace/static/samplestock.csv"
+stockpath = "workspace/input/2023-10-2.csv"
 stockid = stockpath.split("/")[-1].split(".")[0]
 
 pricespath = "workspace/db/nameprices.json"

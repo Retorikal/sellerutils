@@ -317,7 +317,7 @@
          style="font-style:normal;font-variant:normal;font-weight:900;font-stretch:normal;font-size:37.3333px;line-height:1.25;font-family:Lato;-inkscape-font-specification:'Lato Heavy';text-align:center;white-space:pre;shape-inside:url(#rect97114);fill:#333333;fill-opacity:1"><tspan
            x="80.336248"
            y="66.428955"
-           id="tspan14481">{CARDNAME}
+           id="tspan14481">{SVGTEMPLATE_CARDNAME}
 </tspan><tspan
            x="199.90527"
            y="113.09558"

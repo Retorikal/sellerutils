@@ -4,6 +4,7 @@ from datetime import datetime
 from string import Template
 from database.Price import Prices as Prices
 import logging
+import html
 import wget
 import re
 import os
@@ -45,9 +46,13 @@ class SVGTemplate():
 
   def generate_from_stock_entry(self, db: Prices, card_details: dict, force_update=True):
     card_details['SVGTEMPLATE_CARDIMG'] = f"{self.img_dir}{card_details['CARDIMG']}.png"
+    card_details['SVGTEMPLATE_CARDNAME'] = html.escape(
+      card_details['CARDNAME'])
+
     svg_string = self.template.substitute(card_details)
     filename = os.path.join(
       self.sandbox_dir, f"{card_details['CARDIMG']}.svg")
+    self.get_card_image(card_details['CARDIMG'])
     if not exists(filename) or force_update:
       logging.info(f"writing image {filename}")
       with open(filename, "w") as svg_file:
