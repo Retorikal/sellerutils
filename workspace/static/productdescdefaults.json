@@ -1,0 +1,31 @@
+{
+  "Nama Produk": "Digimon TCG: $CARDNAME [$TOKOPEDIA_TITLEDESC]",
+  "Deskripsi Produk": [
+    "Digimon Card Game: $CARDNAME ($CARDCODE)",
+    "$CARDDESC",
+    "",
+    "Kondisi baru/lightly played.",
+    "Harap baca informasi dulu sebelum membeli!"
+  ],
+  "Kode Kategori": "3197",
+  "Berat (Gram)": "1",
+  "Minimum Pemesanan": "1",
+  "Nomor Etalase": "35258035",
+  "Waktu Proses Preorder": "",
+  "Kondisi": "Baru",
+  "Foto Produk 1": "http://raw.githubusercontent.com/Retorikal/retorikaltcgimages/master/images/${CARDIMG}.png",
+  "Foto Produk 2": "",
+  "Foto Produk 3": "",
+  "Foto Produk 4": "",
+  "Foto Produk 5": "",
+  "URL Video Produk 1": "",
+  "URL Video Produk 2": "",
+  "URL Video Produk 3": "",
+  "SKU Name": "$CARDIMG",
+  "Status": "Aktif",
+  "Jumlah Stok": "$STOCK",
+  "Harga (Rp)": "$PRICE",
+  "Kurir Pengiriman": "18,44,51,43,1,2,6,22",
+  "Asuransi Pengiriman": "Opsional"
+}
+
