@@ -4,10 +4,10 @@ import re
 import logging
 
 from fetcher.cardnames import digimoncard
-from fetcher.price.IScraper import Scraper
+from fetcher.price.IScraper import IScraper
 
 
-class ScraperYYTDigi(Scraper):
+class ScraperYYTDigi(IScraper):
   def __init__(self) -> None:
     self.url = "https://yuyu-tei.jp/top/digi"
     self.price_dict = {}
@@ -19,8 +19,8 @@ class ScraperYYTDigi(Scraper):
     self.price_dict = price_dict
 
     cats = self.get_categories()
-    promo_cats = [cat for cat in cats if "promo" in cat]
-    regular_cats = [cat for cat in cats if not "promo" in cat]
+    promo_cats = [cat for cat in cats if "pr" in cat]
+    regular_cats = [cat for cat in cats if not "pr" in cat]
 
     for cat in regular_cats:
       self.scrape_prices_regular(cat)

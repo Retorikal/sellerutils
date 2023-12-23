@@ -2,6 +2,7 @@
 from os.path import exists
 from datetime import datetime
 from string import Template
+from typing import Any
 from database.Price import Prices as Prices
 import logging
 import html
@@ -44,7 +45,18 @@ class SVGTemplate():
     os.system(f'mv {self.sandbox_dir}/*.png {self.out_dir}/')
     # os.system(f'mv {self.sandbox_dir}/*.svg {self.out_dir}/')
 
-  def generate_from_stock_entry(self, db: Prices, card_details: dict, force_update=True):
+  def generate_from_stock_entry(self, card_details: dict[str, Any], force_update=True):
+    """
+    Accepts `card_details` and generates an appropriate svg file
+    @param `card_details`: a dict with the following format:
+    ```
+    dict{
+      'CARDIMG': [Card filename], 
+      'CARDNAME': [Card name]
+    }
+    ```
+    @param `force_update`: bool, if true will overwrite previous image
+    """
     card_details['SVGTEMPLATE_CARDIMG'] = f"{self.img_dir}{card_details['CARDIMG']}.png"
     card_details['SVGTEMPLATE_CARDNAME'] = html.escape(
       card_details['CARDNAME'])

@@ -2,7 +2,7 @@ import os.path
 import json
 import logging
 from fetcher.cardnames import digimoncard
-from fetcher.price import IScraper
+from fetcher.price.IScraper import IScraper
 
 
 class Prices():

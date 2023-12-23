@@ -1,3 +1,4 @@
+from typing import Any
 import openpyxl as opxl
 from database.Price import Prices as Prices
 import os
@@ -56,12 +57,22 @@ class Tokopedia():
       if "$" in self.defaults[key]:
         self.defaults[key] = Template(self.defaults[key])
 
-  def populate_from_stock_entry(self, db: Prices, card_details: dict):
-    card_details["TOKOPEDIA_TITLEDESC"] = card_details["CARDDESC"].replace(
-      "\n", ", ")
-    self.entry_ws.append(self.__create_entry(card_details))
-
-  def __create_entry(self, info):
+  def populate_from_stock_entry(self, info):
+    """
+    Accepts `card_details` adds an appropriate entry to the Tokopedia uploadable xls.
+    @param `card_details`: a dict with the following format:
+    ```
+    dict{\
+      "CARDCODE": # Card's full code qualifier plus parallel notation, ex: BT11-023_P1,
+      "CARDNAME": # Card's full name,
+      "TITLEDESC": # Inline short description,
+      "CARDDESC": # Full string for product description in shop listing,
+      "PRICE": # Price in idr: yyt * 100,
+      "STOCK": # Amount of card in stock,
+      "CARDIMG": # Card image filename
+    }
+    ```
+    """
     row = []
     for column in columns:
       value = self.defaults.get(column, "")
@@ -70,7 +81,7 @@ class Tokopedia():
         value = value.substitute(info)
 
       row.append(value)
-    return row
+    self.entry_ws.append(row)
 
   def save(self):
     self.wb.save(self.workpath)

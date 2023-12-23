@@ -5,10 +5,10 @@ import logging
 
 from fetcher.cardnames import digimoncard
 
-from fetcher.price.IScraper import Scraper
+from fetcher.price.IScraper import IScraper
 
 
-class ScraperBigwebDigi(Scraper):
+class ScraperBigwebDigi(IScraper):
   def __init__(self) -> None:
     self.domain = "https://yuyu-tei.jp/"
     self.digi_url = "https://yuyu-tei.jp/game_digi/"

@@ -1,24 +1,44 @@
 import csv
 import logging
+from typing import Any, Generator
 from database.Price import Prices
 from collections.abc import Iterable
 
 
 class Stocks():
-  def __init__(self, filepath: str, prices: Prices):
-    self.pricemul = 100
-    self.filepath = filepath
-    self.prices = prices
+  """
+  Creates an iterable based on two database files:
+  `stockpath`: CSV file containing how much stock is available for a given card ID
+  `pricespath`: Dictionary file containing how much should a given card ID sell for
+  """
 
-  def parse(self) -> Iterable[dict]:
-    with open(self.filepath) as file:
+  def __init__(self, stockpath: str, pricespath: str):
+    self.rate = 100
+    self.stockpath = stockpath
+    self.prices = Prices(pricespath)
+
+  def parse_stock(self) -> Iterable[dict[str, Any]]:
+    """ 
+    Iterates `self.stockpath` and returns a `dict` with the following entries for each card:
+    ```
+    dict{
+      "CARDCODE": # Card's full code qualifier plus parallel notation, ex: BT11-023_P1,
+      "CARDNAME": # Card's full name,
+      "CARDDESC": # Full string for product description in shop listing,
+      "PRICE": # Price in idr: yyt * 100,
+      "STOCK": # Amount of card in stock,
+      "CARDIMG": # Card image filename
+    }
+    ```
+    """
+    with open(self.stockpath) as file:
       reader = csv.reader(file, delimiter=",")
       next(reader)
       for stock_row in reader:
         for card_detail in self.__iterate_stock_entry(stock_row):
           yield card_detail
 
-  def __iterate_stock_entry(self, stock_row: list[str]) -> dict:
+  def __iterate_stock_entry(self, stock_row: list[str]) -> Generator[dict[str, Any], Any, Any]:
     card_id = stock_row[0]
     stock = stock_row[1:]
     name, main_prices, alt_prices, alt_names = self.prices.get_prices(card_id)
@@ -38,12 +58,14 @@ class Stocks():
           print(card_id, key_spec)
         if key_spec >= 1:
           desc_list += f"Parallel {key_spec} \n"
+        desc_list = desc_list.strip()
 
         yield {
           "CARDCODE": card_id,
           "CARDNAME": name,
-          "CARDDESC": desc_list.strip(),
-          "PRICE": main_prices[variant] * self.pricemul,
+          "CARDDESC": desc_list,
+          "TOKOPEDIA_TITLEDESC": desc_list.replace("\n", ", "),
+          "PRICE": main_prices[variant] * self.rate,
           "STOCK": int(stock[index]),
           "CARDIMG": get_image()
         }
@@ -76,7 +98,7 @@ class Stocks():
           "CARDCODE": card_id,
           "CARDNAME": name,
           "CARDDESC": desc_list.strip(),
-          "PRICE": alt_prices[variant] * self.pricemul,
+          "PRICE": alt_prices[variant] * self.rate,
           "STOCK": int(stock[index]),
           "CARDIMG": get_image()
         }
