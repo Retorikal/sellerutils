@@ -51,20 +51,20 @@ class SVGTemplate():
     @param `card_details`: a dict with the following format:
     ```
     dict{
-      'CARDIMG': [Card filename], 
+      'CARDSKU': [Card filename], 
       'CARDNAME': [Card name]
     }
     ```
     @param `force_update`: bool, if true will overwrite previous image
     """
-    card_details['SVGTEMPLATE_CARDIMG'] = f"{self.img_dir}{card_details['CARDIMG']}.png"
+    card_details['SVGTEMPLATE_CARDSKU'] = f"{self.img_dir}{card_details['CARDSKU']}.png"
     card_details['SVGTEMPLATE_CARDNAME'] = html.escape(
       card_details['CARDNAME'])
 
     svg_string = self.template.substitute(card_details)
     filename = os.path.join(
-      self.sandbox_dir, f"{card_details['CARDIMG']}.svg")
-    self.get_card_image(card_details['CARDIMG'])
+      self.sandbox_dir, f"{card_details['CARDSKU']}.svg")
+    self.get_card_image(card_details['CARDSKU'])
     if not exists(filename) or force_update:
       logging.info(f"writing image {filename}")
       with open(filename, "w") as svg_file:

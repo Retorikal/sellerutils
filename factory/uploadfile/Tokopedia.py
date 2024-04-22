@@ -1,9 +1,13 @@
-from typing import Any
+from typing import Any, Callable
 import openpyxl as opxl
+from openpyxl.worksheet.table import Table
 from database.Price import Prices as Prices
 import os
 import json
 from string import Template
+
+from database.Stocks import Stocks
+from factory.image.SVGTemplate import SVGTemplate
 
 columns = [
   "Pesan Error",
@@ -34,18 +38,18 @@ columns = [
 
 default_name = "workspace/static/tambah-sekaligus.xlsx"
 default_fields_path = "workspace/static/productdescdefaults.json"
+templatepath = "workspace/static/templates/templateDigi.svg"
 
 
 class Tokopedia():
-  def __init__(self, workpath, templatepath=default_name):
+  def __init__(self, workpath, xlspath=default_name):
     self.workpath = workpath
+    self.imgfactory = SVGTemplate(templatepath)
 
-    if os.path.exists(templatepath):
-      self.wb = opxl.load_workbook(templatepath)
+    if os.path.exists(xlspath):
+      self.wb = opxl.load_workbook(xlspath)
     else:
       raise FileNotFoundError
-
-    self.entry_ws = self.wb.get_sheet_by_name("ISI Template Impor Produk")
 
     with (open(default_fields_path)) as defaults_file:
       self.defaults = json.load(defaults_file)
@@ -57,7 +61,32 @@ class Tokopedia():
       if "$" in self.defaults[key]:
         self.defaults[key] = Template(self.defaults[key])
 
-  def populate_from_stock_entry(self, info):
+  def create_uploadable_from_new_stock(self, stocks: Stocks):
+    self.entry_ws = self.wb["ISI Template Impor Produk"]
+    for stock in stocks.parse_stock():
+      self.__populate_from_stock_entry(stock)
+      self.imgfactory.generate_from_stock_entry(stock)
+    self.save()
+    self.imgfactory.dump_results()
+
+  def create_uploadable_from_old_stock(self, stocks: Stocks):
+    self.entry_ws = self.wb["Ubah - Informasi Penjualan"]
+    column_sku = 11
+    column_price = 8
+    row = 4
+    while True:
+      sku = self.entry_ws.cell(row, column_sku)
+      price = self.entry_ws.cell(row, column_price)
+
+      if sku.value is None or str(price.value)[-3:] != "000":
+        break
+
+      price.value = str(stocks.prices.get_price(str(sku.value)) * stocks.rate)
+      row += 1
+
+    self.wb.save(self.workpath)
+
+  def __populate_from_stock_entry(self, stock):
     """
     Accepts `card_details` adds an appropriate entry to the Tokopedia uploadable xls.
     @param `card_details`: a dict with the following format:
@@ -69,7 +98,7 @@ class Tokopedia():
       "CARDDESC": # Full string for product description in shop listing,
       "PRICE": # Price in idr: yyt * 100,
       "STOCK": # Amount of card in stock,
-      "CARDIMG": # Card image filename
+      "CARDSKU": # Card image filename
     }
     ```
     """
@@ -78,7 +107,7 @@ class Tokopedia():
       value = self.defaults.get(column, "")
 
       if type(value) is Template:
-        value = value.substitute(info)
+        value = value.substitute(stock)
 
       row.append(value)
     self.entry_ws.append(row)

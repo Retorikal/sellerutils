@@ -24,10 +24,11 @@ class Stocks():
     dict{
       "CARDCODE": # Card's full code qualifier plus parallel notation, ex: BT11-023_P1,
       "CARDNAME": # Card's full name,
+      "TITLEDESC": # Inline short description,
       "CARDDESC": # Full string for product description in shop listing,
       "PRICE": # Price in idr: yyt * 100,
       "STOCK": # Amount of card in stock,
-      "CARDIMG": # Card image filename
+      "CARDSKU": # Card image filename
     }
     ```
     """
@@ -40,43 +41,49 @@ class Stocks():
 
   def __iterate_stock_entry(self, stock_row: list[str]) -> Generator[dict[str, Any], Any, Any]:
     card_id = stock_row[0]
-    stock = stock_row[1:]
+    stocks = stock_row[1:]
     name, main_prices, alt_prices, alt_names = self.prices.get_prices(card_id)
-    index = 0
 
     def get_image() -> str:
       return card_id + (f"_P{index}" if index > 0 else "")
 
-    for variant in main_prices:
-      if index >= len(stock):
+    for index, variant in enumerate(main_prices):
+      if index >= len(stocks):
         continue
 
-      if stock[index] != '' and int(stock[index]) > 0:
-        desc_list = f"{card_id}\n"
-        key_spec = int(variant[-1])
-        if card_id == "BT13-101":
-          print(card_id, key_spec)
-        if key_spec >= 1:
-          desc_list += f"Parallel {key_spec} \n"
-        desc_list = desc_list.strip()
+      try:
+        count = int(stocks[index])
+      except:
+        count = 0
 
-        yield {
-          "CARDCODE": card_id,
-          "CARDNAME": name,
-          "CARDDESC": desc_list,
-          "TOKOPEDIA_TITLEDESC": desc_list.replace("\n", ", "),
-          "PRICE": main_prices[variant] * self.rate,
-          "STOCK": int(stock[index]),
-          "CARDIMG": get_image()
-        }
+      if count == 0:
+        continue
+
+      desc_list = f"{card_id}\n"
+      key_spec = int(variant[-1])
+      if card_id == "BT13-101":
+        print(card_id, key_spec)
+      if key_spec >= 1:
+        desc_list += f"Parallel {key_spec} \n"
+      desc_list = desc_list.strip()
+
+      yield {
+        "CARDCODE": card_id,
+        "CARDNAME": name,
+        "CARDDESC": desc_list,
+        "TITLEDESC": desc_list.replace("\n", ", "),
+        "PRICE": main_prices[variant] * self.rate,
+        "STOCK": int(stocks[index]),
+        "CARDSKU": get_image()
+      }
 
       index += 1
 
     for variant in alt_prices:
-      if index >= len(stock):
+      if index >= len(stocks):
         continue
 
-      if stock[index] != '' and int(stock[index]) > 0 and variant[0] != "_":
+      if stocks[index] != '' and int(stocks[index]) > 0 and variant[0] != "_":
         desc_list = f"{card_id}\n"
         booster_source, _ = variant.split("-")
 
@@ -94,17 +101,20 @@ class Stocks():
           if key_spec >= 1:
             desc_list += f"Parallel{ f' {key_spec}' if key_spec > 1 else ''}"
 
+        desc_list = desc_list.strip()
+
         yield {
           "CARDCODE": card_id,
           "CARDNAME": name,
-          "CARDDESC": desc_list.strip(),
+          "CARDDESC": desc_list,
+          "TITLEDESC": desc_list.replace("\n", ", "),
           "PRICE": alt_prices[variant] * self.rate,
-          "STOCK": int(stock[index]),
-          "CARDIMG": get_image()
+          "STOCK": int(stocks[index]),
+          "CARDSKU": get_image()
         }
 
       else:
-        if stock[index] != '' and int(stock[index]) > 0 and variant[0] == "_":
+        if stocks[index] != '' and int(stocks[index]) > 0 and variant[0] == "_":
           logging.error(f"nonzero stock for skip specifier: {variant}")
 
       index += 1

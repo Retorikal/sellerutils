@@ -9,20 +9,17 @@ import csv
 
 logging.basicConfig(level=logging.INFO)
 
-stockpath = "workspace/input/2023-12-2.csv"
+stockpath = "workspace/input/ipm.csv"
 stockid = stockpath.split("/")[-1].split(".")[0]
-
 pricespath = "workspace/db/nameprices.json"
-templatepath = "workspace/static/templates/templateDigi.svg"
 tokopediapath = f"workspace/output/{stockid}.xlsx"
 
-imgfactory = SVGTemplate(templatepath)
 tokopedia = Tokopedia(tokopediapath)
 stocks = Stocks(stockpath, pricespath)
+tokopedia.create_uploadable_from_new_stock(stocks)
 
-for stock in stocks.parse_stock():
-  imgfactory.generate_from_stock_entry(stock)
-  tokopedia.populate_from_stock_entry(stock)
+# tokopedia = Tokopedia(f"workspace/output/refresh.xlsx",
+#                       "workspace/input/ubah-sekaligus-15995836-(1)-20231223154004.414.xlsx")
+# stocks = Stocks("", "workspace/db/nameprices.json")
 
-imgfactory.dump_results()
-tokopedia.save()
+# tokopedia.create_uploadable_from_old_stock(stocks)

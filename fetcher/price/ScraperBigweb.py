@@ -100,11 +100,11 @@ class ScraperBigwebDigi(IScraper):
       self.register_card(card_id)
 
     if booster_source == "" or booster_source.upper() in card_id.upper():
-      cluster = self.price_dict[card_id]["main_variant"]
+      cluster = self.price_dict[card_id]["main"]
       variant_id = f"p{alt_id}"
       cluster[variant_id] = price
     else:
-      cluster = self.price_dict[card_id]["alt_variant"]
+      cluster = self.price_dict[card_id]["alt"]
       variant_id = f"{booster_source}-p{alt_id}"
       cluster[variant_id] = price
 

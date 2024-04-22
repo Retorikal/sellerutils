@@ -12,9 +12,9 @@ def new_card_entry(name):
   return {
       "name": name,
       "variants": 1,
-      "main_variant": {},
-      "alt_variant": {},
-      "variant_names": {}
+      "main": {},
+      "alt": {},
+      "varnames": {}
   }
 
 

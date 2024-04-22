@@ -26,12 +26,27 @@ class Prices():
     if dump:
       self.dump_file()
 
+  def get_price(self, card_sku: str):
+    card_identifiers = card_sku.split("_")
+    card_id = card_identifiers[0]
+    card_alt_idx = int(card_identifiers[1][1:]) if len(
+      card_identifiers) > 1 else 0
+    main_size = len(self.db[card_id]["main"])
+    if card_alt_idx < main_size:
+      keys = list(self.db[card_id]["main"].keys())
+      key = keys[card_alt_idx]
+      return self.db[card_id]["main"][key]
+
+    keys = list(self.db[card_id]["alt"].keys())
+    key = keys[card_alt_idx - main_size]
+    return self.db[card_id]["alt"][key]
+
   def get_prices(self, card_id) -> tuple[str, dict, dict, dict]:
     return (
         self.db[card_id]["name"],
-        self.db[card_id]["main_variant"],
-        self.db[card_id]["alt_variant"],
-        self.db[card_id]["variant_names"],
+        self.db[card_id]["main"],
+        self.db[card_id]["alt"],
+        self.db[card_id]["varnames"],
       )
 
   def dump_file(self, filename=""):
