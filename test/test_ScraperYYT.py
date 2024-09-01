@@ -1,6 +1,6 @@
 import unittest
 import logging
-from fetcher.price.ScraperYYT import ScraperYYTDigi as sc
+from fetcher.price.YYT import YYTScraper as sc
 
 
 class TestScraperYYT(unittest.TestCase):

@@ -1,13 +1,11 @@
-from typing import Any, Callable
+import logging
 import openpyxl as opxl
-from openpyxl.worksheet.table import Table
-from database.Price import Prices as Prices
+from database.Card import CardDB as CardDB
 import os
 import json
+import configs
 from string import Template
-
-from database.Stocks import Stocks
-from factory.image.SVGTemplate import SVGTemplate
+from database.Stocks import StockEntry, StockDB
 
 columns = [
   "Pesan Error",
@@ -35,23 +33,20 @@ columns = [
   "Asuransi Pengiriman"
 ]
 
-
-default_name = "workspace/static/tambah-sekaligus.xlsx"
-default_fields_path = "workspace/static/productdescdefaults.json"
-templatepath = "workspace/static/templates/templateDigi.svg"
+# templatepath = "workspace/static/templates/templateDigi.svg"
 
 
-class Tokopedia():
-  def __init__(self, workpath, xlspath=default_name):
-    self.workpath = workpath
-    self.imgfactory = SVGTemplate(templatepath)
+class TokopediaGenerator():
+  def __init__(self, xlspath=None):
+    if not xlspath:
+      xlspath = configs.template_xls_path()
 
     if os.path.exists(xlspath):
       self.wb = opxl.load_workbook(xlspath)
     else:
       raise FileNotFoundError
 
-    with (open(default_fields_path)) as defaults_file:
+    with (open(configs.product_default_path())) as defaults_file:
       self.defaults = json.load(defaults_file)
 
     for key in self.defaults:
@@ -61,15 +56,22 @@ class Tokopedia():
       if "$" in self.defaults[key]:
         self.defaults[key] = Template(self.defaults[key])
 
-  def create_uploadable_from_new_stock(self, stocks: Stocks):
+  """
+  Write the content of a `Stock` object to an uploadable xls file.
+  Creates an iterable based on two database files:
+  `stockpath`: CSV file containing how much stock is available for a given card ID
+  `pricespath`: Dictionary file containing how much should a given card ID sell for
+  """
+
+  def generate_from_new_stock(self, stocks: StockDB, outpath: str):
     self.entry_ws = self.wb["ISI Template Impor Produk"]
     for stock in stocks.parse_stock():
       self.__populate_from_stock_entry(stock)
-      self.imgfactory.generate_from_stock_entry(stock)
-    self.save()
-    self.imgfactory.dump_results()
+      logging.info(f"TokopediaGenerator.generate_from_new_stock: added {stock.stock} {
+                   stock.stock_id} {stock.name} [{stock.subtitle}]")
+    self.wb.save(outpath)
 
-  def create_uploadable_from_old_stock(self, stocks: Stocks):
+  def update_prices(self, prices: CardDB, outpath: str):
     self.entry_ws = self.wb["Ubah - Informasi Penjualan"]
     column_sku = 11
     column_price = 8
@@ -81,36 +83,22 @@ class Tokopedia():
       if sku.value is None or str(price.value)[-3:] != "000":
         break
 
-      price.value = str(stocks.prices.get_price(str(sku.value)) * stocks.rate)
+      price.value = str(prices.get_price_sku(str(sku.value)) * prices.rate)
       row += 1
 
-    self.wb.save(self.workpath)
+    self.wb.save(outpath)
 
-  def __populate_from_stock_entry(self, stock):
+  def __populate_from_stock_entry(self, stock: StockEntry):
     """
-    Accepts `card_details` adds an appropriate entry to the Tokopedia uploadable xls.
-    @param `card_details`: a dict with the following format:
-    ```
-    dict{\
-      "CARDCODE": # Card's full code qualifier plus parallel notation, ex: BT11-023_P1,
-      "CARDNAME": # Card's full name,
-      "TITLEDESC": # Inline short description,
-      "CARDDESC": # Full string for product description in shop listing,
-      "PRICE": # Price in idr: yyt * 100,
-      "STOCK": # Amount of card in stock,
-      "CARDSKU": # Card image filename
-    }
-    ```
+    Accepts `stock` and adds an appropriate entry to the Tokopedia uploadable xls.
+    @param `stock`: `stock` object:
     """
     row = []
     for column in columns:
       value = self.defaults.get(column, "")
 
       if type(value) is Template:
-        value = value.substitute(stock)
+        value = value.substitute(stock.get_dict())
 
       row.append(value)
     self.entry_ws.append(row)
-
-  def save(self):
-    self.wb.save(self.workpath)

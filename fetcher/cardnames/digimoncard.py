@@ -11,9 +11,7 @@ test_file = os.path.join(os.getcwd(), "workspace/static/digimoncard.html")
 def new_card_entry(name):
   return {
       "name": name,
-      "variants": 1,
-      "main": {},
-      "alt": {},
+      "variants": {},
       "varnames": {}
   }
 
@@ -44,9 +42,5 @@ def get_cardname_dict(url=digimoncard_url, file=""):
 
     if not card_id in card_dict:
       card_dict[card_id] = new_card_entry(card_name)
-    # Probably need to move this declaration somewhere
-
-    else:
-      card_dict[card_id]["variants"] += 1
 
   return card_dict
