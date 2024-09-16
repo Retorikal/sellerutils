@@ -13,7 +13,7 @@
   "Nomor Etalase": "35258035",
   "Waktu Proses Preorder": "",
   "Kondisi": "Baru",
-  "Foto Produk 1": "http://raw.githubusercontent.com/Retorikal/retorikaltcgimages/master/images/${CARDSKU}.png",
+  "Foto Produk 1": "http://raw.githubusercontent.com/Retorikal/retorikaltcgimages/master/${CARDSKU}.png",
   "Foto Produk 2": "",
   "Foto Produk 3": "",
   "Foto Produk 4": "",

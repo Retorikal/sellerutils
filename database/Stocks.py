@@ -36,9 +36,9 @@ class StockDB():
   `pricespath`: Dictionary file containing how much should a given card ID sell for
   """
 
-  def __init__(self, stockpath: str, prices: CardDB):
-    self.prices = prices
-    self.rate = prices.rate
+  def __init__(self, stockpath: str, db: CardDB):
+    self.prices = db
+    self.rate = db.rate
     self.stockpath = stockpath
 
   def parse_stock(self) -> Iterable[StockEntry]:
@@ -73,6 +73,9 @@ class StockDB():
       if index > 0:
         image_id += f"_P{index}"
 
+      variant_string = "" if variant_id[-2:] == "p0" else (
+        f"_{variant_id}").upper()
+
       detail = StockEntry(
         code=card_id,
         name=card_entry.name,
@@ -80,7 +83,7 @@ class StockDB():
         subtitle=", ".join(desc_list),
         price=variant_price * self.prices.rate,
         stock=int(stocks[index]),
-        stock_id=card_id + (f"_{variant_id}").upper(),
+        stock_id=card_id + variant_string,
         image_id=image_id
       )
 

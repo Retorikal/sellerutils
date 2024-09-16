@@ -12,6 +12,10 @@ def template_svg_path():
   return f"{root_config}/templateDigi.svg"
 
 
+def card_images_path():
+  return f"{user_config}/cardimages/"
+
+
 def template_xls_path():
   return f"{root_config}/tambah-sekaligus.xlsx"
 

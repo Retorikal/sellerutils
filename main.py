@@ -68,20 +68,5 @@ match args.operation:
 
   case "draw":
     sanitize_io_args()
-    logging.info("To Be Implemented")
-
-
-# stockpath = "workspace/input/ragnaloard.csv"
-# stockid = stockpath.split("/")[-1].split(".")[0]
-# pricespath = "workspace/db/nameprices.json"
-# tokopediapath = f"workspace/output/{stockid}.xlsx"
-
-# tokopedia = Tokopedia(tokopediapath)
-# stocks = Stocks(stockpath, pricespath)
-# tokopedia.create_uploadable_from_new_stock(stocks)
-
-# tokopedia = Tokopedia(f"workspace/output/refresh.xlsx",
-#                       "workspace/input/ubah-sekaligus-15995836-(1)-20231223154004.414.xlsx")
-# stocks = Stocks("", "workspace/db/nameprices.json")
-
-# tokopedia.create_uploadable_from_old_stock(stocks)
+    generator = SVGGenerator(args.output)
+    generator.generate_images(StockDB(args.input, prices))
