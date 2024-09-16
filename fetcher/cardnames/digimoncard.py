@@ -11,7 +11,9 @@ test_file = os.path.join(os.getcwd(), "workspace/static/digimoncard.html")
 def new_card_entry(name):
   return {
       "name": name,
-      "variants": {},
+      "variants": [],
+      "images": {},
+      "prices": {},
       "varnames": {}
   }
 

@@ -121,9 +121,8 @@ class YYTScraper(IScraper):
   def add_card(self, card_id: str, price: int, alt_id=1, booster_source=""):
     card_dict = self.get_create_card_dict(card_id)
 
-    variant_text = []
-
-    # Add identifier
+    # Generate variant ID.
+    variant_id = ""
     if booster_source == "" or booster_source.upper() in card_id.upper():
       variant_id = f"p{alt_id}"
     else:
@@ -132,12 +131,26 @@ class YYTScraper(IScraper):
       if booster_source == "P":
         card_dict["varnames"][variant_id] = "Promo"
       else:
-        card_dict["varnames"][variant_id] = f"{booster_source} reprint"
+        card_dict["varnames"][variant_id] = f"{booster_source} Reprint"
 
-    if alt_id > 0:
-      variant_text.append(f"Alternate {alt_id}")
+    # Generate store image id if not exist
+    if not variant_id in card_dict["variants"]:
+      card_dict["variants"].append(variant_id)
 
+    # Generate image name if empty
+    if not variant_id in card_dict["images"]:
+      index = card_dict["variants"].index(variant_id)
+      index_string = f"_P{index}" if index > 0 else ""
+      card_dict["images"][variant_id] = card_id + index_string + ".png"
+
+    # Generate variant name if empty
     if not variant_id in card_dict["varnames"]:
+      variant_text = []
+
+      if alt_id > 0:
+        variant_text.append(f"Alternate {alt_id}")
+
       card_dict["varnames"][variant_id] = " ".join(variant_text)
 
-    card_dict["variants"][variant_id] = price
+    # Generate and store / update variant price
+    card_dict["prices"][variant_id] = price

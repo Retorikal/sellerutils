@@ -57,34 +57,27 @@ class StockDB():
     stocks = stock_row[1:]
     card_entry = self.prices.get_entry_by_id(card_id)
 
-    for index, (variant_id, variant_price) in enumerate(card_entry.variant_prices.items()):
+    for index, variant in enumerate(card_entry.variants):
       if stocks[index] == '' or int(stocks[index]) == 0:
         continue
 
-      if int(stocks[index]) > 0 and variant_id[0] == "_":
-        logging.error(f"nonzero stock for skip specifier: {variant_id}")
+      if int(stocks[index]) > 0 and variant[0] == "_":
+        logging.error(f"nonzero stock for skip specifier: {variant}")
 
       desc_list = [f"{card_id}"]
-      variant_name = card_entry.variant_names[variant_id]
+      variant_name = card_entry.variant_names[variant]
       if not variant_name == "":
         desc_list.append(variant_name)
-
-      image_id = card_id
-      if index > 0:
-        image_id += f"_P{index}"
-
-      variant_string = "" if variant_id[-2:] == "p0" else (
-        f"_{variant_id}").upper()
 
       detail = StockEntry(
         code=card_id,
         name=card_entry.name,
         desc="\n".join(desc_list),
         subtitle=", ".join(desc_list),
-        price=variant_price * self.prices.rate,
+        price=card_entry.variant_prices[variant] * self.prices.rate,
         stock=int(stocks[index]),
-        stock_id=card_id + variant_string,
-        image_id=image_id
+        stock_id=f"{card_id}_{variant}",
+        image_id=card_entry.variant_images[variant]
       )
 
       yield detail

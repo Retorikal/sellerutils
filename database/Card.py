@@ -10,7 +10,9 @@ from fetcher.price.IScraper import IScraper
 class CardEntry():
   name: str
   id: str
+  variants: list
   variant_prices: dict
+  variant_images: dict
   variant_names: dict
 
 
@@ -40,24 +42,17 @@ class CardDB():
   def get_price_sku(self, card_sku: str):
     card_identifiers = card_sku.split("_")
     card_id = card_identifiers[0]
-    card_alt_idx = int(card_identifiers[1][1:]) if len(
-      card_identifiers) > 1 else 0
+    variant = card_identifiers[1] if len(card_identifiers) > 0 else "p0"
 
-    main_size = len(self.db[card_id]["main"])
-    if card_alt_idx < main_size:
-      keys = list(self.db[card_id]["main"].keys())
-      key = keys[card_alt_idx]
-      return self.db[card_id]["main"][key]
-
-    keys = list(self.db[card_id]["alt"].keys())
-    key = keys[card_alt_idx - main_size]
-    return self.db[card_id]["alt"][key]
+    return self.db[card_id]["prices"][variant]
 
   def get_entry_by_id(self, card_id) -> CardEntry:
     price = CardEntry(
       id=card_id,
       name=self.db[card_id]["name"],
-      variant_prices=self.db[card_id]["variants"],
+      variants=self.db[card_id]["variants"],
+      variant_prices=self.db[card_id]["prices"],
+      variant_images=self.db[card_id]["images"],
       variant_names=self.db[card_id]["varnames"]
     )
 

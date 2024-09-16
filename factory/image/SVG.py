@@ -16,7 +16,7 @@ import tempfile
 
 from database.Stocks import StockEntry, StockDB
 
-jp_url = "https://en.digimoncard.com/images/cardlist/card/{}.png"
+jp_url = "https://en.digimoncard.com/images/cardlist/card/{}"
 
 
 class SVGGenerator():
@@ -64,7 +64,7 @@ class SVGGenerator():
     @param `force_update`: bool, if true will overwrite previous image
     """
     card_details: dict[str, Any] = stock.get_dict()
-    card_details['SVG_IMAGE_PATH'] = f"{self.img_dir}/{stock.image_id}.png"
+    card_details['SVG_IMAGE_PATH'] = f"{self.img_dir}{stock.image_id}"
     card_details['SVG_CARDNAME'] = html.escape(card_details['CARDNAME'])
 
     svg_string = self.template.substitute(card_details)
@@ -79,9 +79,9 @@ class SVGGenerator():
       logging.info(f"{filename} exists!")
 
   def __get_card_image(self, entry):
-    filename = os.path.join(self.img_dir, f"{entry}.png")
+    filename = os.path.join(self.img_dir, entry)
     if not exists(filename):
-      logging.info(f"Downloading {entry}.png image")
+      logging.info(f"Downloading {entry} image")
       out = wget.download(jp_url.format(entry), filename)
       return out
     else:
