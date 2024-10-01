@@ -30,7 +30,8 @@ class SVGGenerator():
     self.out_dir = os.path.join(os.getcwd(), out_path)
     self.repl_dict = {}
 
-    shutil.rmtree(self.sandbox_dir)
+    if os.path.exists(self.sandbox_dir):
+      shutil.rmtree(self.sandbox_dir)
     Path(self.sandbox_dir).mkdir(parents=True, exist_ok=True)
     Path(self.img_dir).mkdir(parents=True, exist_ok=True)
 
